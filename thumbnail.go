@@ -58,18 +58,18 @@ func SignParams(key string, params map[string]string) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
+var supportedOps = map[string]bool{
+	"thumbnail": true,
+	"resize":    true,
+	"flip":      true,
+	"rotate":    true,
+}
+
 // GenerateThumbnailFromURL generates an image from any URL, not just a local path
 func GenerateThumbnailFromURL(href string, geometry string, options *Options) (string, error) {
 	g, err := ParseGeometry(geometry)
 	if err != nil {
 		return "", err
-	}
-
-	supportedOps := map[string]bool{
-		"thumbnail": true,
-		"resize":    true,
-		"flip":      true,
-		"rotate":    true,
 	}
 
 	if options.Op == "" {
@@ -84,29 +84,26 @@ func GenerateThumbnailFromURL(href string, geometry string, options *Options) (s
 		}
 	}
 
-	w := ""
-	h := ""
-
-	if g.X != 0 {
-		w = strconv.Itoa(g.X)
-	}
-
-	if g.Y != 0 {
-		h = strconv.Itoa(g.Y)
-	}
-
 	params := map[string]string{
-		"w":   w,
-		"h":   h,
 		"op":  options.Op,
 		"url": href,
 	}
 
 	v := url.Values{}
-	v.Add("w", w)
-	v.Add("h", h)
 	v.Add("op", options.Op)
 	v.Add("url", href)
+
+	if g.X != 0 {
+		w := strconv.Itoa(g.X)
+		v.Add("w", w)
+		params["w"] = w
+	}
+
+	if g.Y != 0 {
+		h := strconv.Itoa(g.Y)
+		v.Add("h", h)
+		params["h"] = h
+	}
 
 	if options.Upscale != 0 {
 		params["upscale"] = string(options.Upscale)
