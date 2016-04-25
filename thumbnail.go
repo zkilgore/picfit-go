@@ -84,26 +84,30 @@ func GenerateThumbnailFromURL(href string, geometry string, options *Options) (s
 		}
 	}
 
+	w := ""
+	h := ""
+
+	if g.X != 0 {
+		w = strconv.Itoa(g.X)
+
+	}
+
+	if g.Y != 0 {
+		h = strconv.Itoa(g.Y)
+	}
+
 	params := map[string]string{
 		"op":  options.Op,
 		"url": href,
+		"w":   w,
+		"h":   h,
 	}
 
 	v := url.Values{}
 	v.Add("op", options.Op)
 	v.Add("url", href)
-
-	if g.X != 0 {
-		w := strconv.Itoa(g.X)
-		v.Add("w", w)
-		params["w"] = w
-	}
-
-	if g.Y != 0 {
-		h := strconv.Itoa(g.Y)
-		v.Add("h", h)
-		params["h"] = h
-	}
+	v.Add("w", w)
+	v.Add("h", h)
 
 	if options.Upscale != 0 {
 		params["upscale"] = string(options.Upscale)
