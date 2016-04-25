@@ -58,6 +58,70 @@ func SignParams(key string, params map[string]string) string {
 	return hex.EncodeToString(mac.Sum(nil))
 }
 
+// GenerateThumbnailFromURL generates an image from any URL, not just a local path
+func GenerateThumbnailFromURL(href string, geometry string, options *Options) (string, error) {
+	g, err := ParseGeometry(geometry)
+	if err != nil {
+		return "", err
+	}
+
+	supportedOps := map[string]bool{
+		"thumbnail": true,
+		"resize":    true,
+		"flip":      true,
+		"rotate":    true,
+	}
+
+	if options.Op == "" {
+		if options.Crop {
+			options.Op = "resize"
+		} else {
+			options.Op = "thumbnail"
+		}
+	} else {
+		if _, ok := supportedOps[options.Op]; !ok {
+			return "", fmt.Errorf("operation %s is not supported", options.Op)
+		}
+	}
+
+	w := ""
+	h := ""
+
+	if g.X != 0 {
+		w = strconv.Itoa(g.X)
+	}
+
+	if g.Y != 0 {
+		h = strconv.Itoa(g.Y)
+	}
+
+	params := map[string]string{
+		"w":   w,
+		"h":   h,
+		"op":  options.Op,
+		"url": href,
+	}
+
+	v := url.Values{}
+	v.Add("w", w)
+	v.Add("h", h)
+	v.Add("op", options.Op)
+	v.Add("url", href)
+
+	if options.Upscale != 0 {
+		params["upscale"] = string(options.Upscale)
+		v.Add("upscale", string(options.Upscale))
+	}
+
+	if options.SecretKey != "" {
+		v.Add("sig", SignParams(options.SecretKey, params))
+	}
+
+	u := fmt.Sprintf("%s/%s?%s", options.BaseURL, options.DefaultMethod, v.Encode())
+
+	return u, nil
+}
+
 // GenerateThumbnailURL returns thumbnail URL without signature and query string.
 func GenerateThumbnailURL(path string, geometry string, options *Options) (string, error) {
 	g, err := ParseGeometry(geometry)
